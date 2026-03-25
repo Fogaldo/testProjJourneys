@@ -1,175 +1,270 @@
-    const moreArticles = [
-        {
-            title: "Как найти дешевые билеты: секреты опытного путешественника",
-            date: "2026-03-18",
-            preview: "Делюсь проверенными способами экономить на перелетах без ущерба для комфорта. Личный опыт и полезные сервисы."
-        },
-        {
-            title: "Что попробовать в Токио: гид по уличной еде",
-            date: "2026-03-10",
-            preview: "От такояки до окономияки — рассказываю, что обязательно нужно съесть в японской столице и где найти лучшие места."
-        },
-        {
-            title: "5 ошибок, которые я совершил в первом solo-трипе",
-            date: "2026-03-05",
-            preview: "На чужих ошибках учатся, но я поделюсь своими, чтобы вы их не повторяли. Бюджет, безопасность, маршруты."
+// проверка подключения скрипта
+console.log('✅ Скрипт script.js загружен!');
+console.log('📍 Текущая страница:', window.location.href);
+
+// КОНФИГУРАЦИЯ
+const API_URL = 'http://localhost:3000/api';
+
+let currentPage = 1;           // текущая страница
+let totalPages = 0;            // всего страниц
+let isLoading = false;         // флаг загрузки (чтобы не отправлять несколько запросов)
+
+// ЗАГРУЗКА СТАТЕЙ С СЕРВЕРА
+async function loadArticles(page = 1) {
+    console.log(`📡 Загружаем страницу ${page}...`);
+    
+    try {
+        const response = await fetch(`${API_URL}/articles?page=${page}&limit=2`);
+        
+        if (!response.ok) {
+            throw new Error(`Ошибка HTTP: ${response.status}`);
         }
-    ];
-    
-    // Количество УЖЕ существующих статей в HTML
-    const existingArticlesCount = 2;
-
-    // Сколько новых статей уже загружено
-    let loadedNewArticlesCount = 0;
-
-    function createArticleElement(article, articleId) {
-        const articleElement = document.createElement('article');
-        const formattedDate = article.date.split('-').reverse().join('.');
         
-        articleElement.innerHTML = `
-            <h2>${article.title}</h2>
+        const data = await response.json();
+        console.log('Ответ от сервера:', data);
+        
+        // Сохраняем информацию о пагинации
+        currentPage = data.page;
+        totalPages = data.totalPages;
+        
+        console.log(`✅ Загружено статей: ${data.articles.length} из ${data.total}`);
+        console.log(`📄 Страница ${currentPage} из ${totalPages}`);
+        
+        return data;
+    } catch (error) {
+        console.error('❌ Ошибка загрузки:', error.message);
+        console.log('💡 Проверь:');
+        console.log('   1. Запущен ли сервер? (cd travel-blog-backend && node server.js)');
+        console.log('   2. Правильный ли порт? (3000)');
+        return { articles: [], total: 0, page: 1, totalPages: 0 };
+    }
+}
+
+// СОЗДАНИЕ HTML СТАТЬИ
+function createArticleHTML(article) {
+    // Преобразуем дату из 2026-03-12 в 12.03.2026
+    const dateParts = article.date.split('-');
+    const formattedDate = `${dateParts[2]}.${dateParts[1]}.${dateParts[0]}`;
+    
+    return `
+        <article>
+            <h2>${escapeHtml(article.title)}</h2>
             <div class="article-meta">
-                <time datetime="${article.date}">${formattedDate}</time>
-                <span class="views-count" data-article-id="${articleId}">👁️ 0 просмотров</span>
+                <time datetime="${escapeHtml(article.date)}">${escapeHtml(formattedDate)}</time>
+                <span class="views-count" data-article-id="${escapeHtml(String(article.id))}">👁️ ${escapeHtml(String(article.views))} просмотров</span>
             </div>
-            <p>${article.preview}</p>
-            <a href="#" class="read-more" aria-label="Читать статью: ${article.title}">Читать дальше</a>`;
+            <p>${escapeHtml(article.preview)}</p>
+            <a href="#" class="read-more">Читать дальше</a>
+        </article>
+    `;
+}
+
+// ОТОБРАЖЕНИЕ СТАТЕЙ НА СТРАНИЦЕ
+function displayArticles(articles, append = false) {
+    console.log(`🎨 Отображаем ${articles.length} статей (append: ${append})...`);
+    
+    const mainElement = document.querySelector('main');
+    
+    if (!mainElement) {
+        console.error('❌ Элемент <main> не найден!');
+        return;
+    }
+    
+    const buttonContainer = document.querySelector('.load-more-container');
+    
+    // Если это не добавление (append = false) — очищаем main, но сохраняем кнопку
+    if (!append) {
+        while (mainElement.firstChild) {
+            if (mainElement.firstChild === buttonContainer) {
+                break;
+            }
+            mainElement.removeChild(mainElement.firstChild);
+        }
+    }
+    
+    // Добавляем каждую статью
+    articles.forEach(article => {
+        const articleHTML = createArticleHTML(article);
         
-        return articleElement;
-    }
-
-        function getViews(articleId) {
-        const views = localStorage.getItem(`article_views_${articleId}`);
-        return views ? parseInt(views) : 0;
-    }
-    
-    function incrementViews(articleId) {
-        const currentViews = getViews(articleId);
-        const newViews = currentViews + 1;
-        localStorage.setItem(`article_views_${articleId}`, newViews);
-        return newViews;
-    }
-    
-    function updateAllViewCounters() {
-        const allViewSpans = document.querySelectorAll('.views-count');
-        allViewSpans.forEach(span => {
-            const articleId = span.getAttribute('data-article-id');
-            if (articleId) {
-                const views = getViews(articleId);
-                span.textContent = `👁️ ${views} просмотров`;
-            }
-        });
-    }
-    
-    function initializeViewCounters() {
-        const articles = document.querySelectorAll('article');
-        articles.forEach((article, index) => {
-            const viewsSpan = article.querySelector('.views-count');
-            if (viewsSpan && !viewsSpan.hasAttribute('data-article-id')) {
-                viewsSpan.setAttribute('data-article-id', index);
-                const views = getViews(index);
-                viewsSpan.textContent = `👁️ ${views} просмотров`;
-            }
-        });
-    }
-    
-    function setupArticleClickTracking() {
-        const articles = document.querySelectorAll('article');
-        articles.forEach((article, index) => {
-            const viewsSpan = article.querySelector('.views-count');
-            if (viewsSpan) {
-                const articleId = viewsSpan.getAttribute('data-article-id');
-                
-                // Отслеживаем клики на ссылку "Читать дальше"
-                const readMoreLink = article.querySelector('.read-more');
-                if (readMoreLink) {
-                    readMoreLink.addEventListener('click', () => {
-                        const newViews = incrementViews(articleId);
-                        viewsSpan.textContent = `👁️ ${newViews} просмотров`;
-                    });
-                }
-            }
-        });
-    }
-    
-    const loadMoreBtn = document.getElementById('loadMoreBtn');
-
-if (loadMoreBtn) {
-    loadMoreBtn.addEventListener('click', function() {
-        // Проверяем, остались ли еще не загруженные статьи
-        if (loadedNewArticlesCount < moreArticles.length) {
-            const mainElement = document.querySelector('main');
-            
-            // Берем следующую статью из массива (начиная с индекса 0)
-            const currentArticle = moreArticles[loadedNewArticlesCount];
-            
-            // ID для новой статьи = существующие статьи + уже загруженные новые
-            const newArticleId = existingArticlesCount + loadedNewArticlesCount;
-            
-            // Создаем новую статью
-            const newArticle = createArticleElement(currentArticle, newArticleId);
-            
-            // Находим контейнер с кнопкой (чтобы вставить перед ним)
-            const buttonContainer = document.querySelector('.load-more-container');
-            
-            // Вставляем статью перед кнопкой
-            if (buttonContainer) {
-                mainElement.insertBefore(newArticle, buttonContainer);
-            } else {
-                mainElement.appendChild(newArticle);
-            }
-            
-            console.log(`Загружена статья ${loadedNewArticlesCount + 1}: ${currentArticle.title}`);
-            
-            // Настраиваем счетчик для новой статьи
-            const newViewsSpan = newArticle.querySelector('.views-count');
-            if (newViewsSpan) {
-                newViewsSpan.setAttribute('data-article-id', newArticleId);
-                const views = getViews(newArticleId);
-                newViewsSpan.textContent = `👁️ ${views} просмотров`;
-            }
-            
-            // Навешиваем обработчик на новую ссылку "Читать дальше"
-            const newReadMoreLink = newArticle.querySelector('.read-more');
-            if (newReadMoreLink && newViewsSpan) {
-                newReadMoreLink.addEventListener('click', () => {
-                    const newViews = incrementViews(newArticleId);
-                    newViewsSpan.textContent = `👁️ ${newViews} просмотров`;
-                });
-            }
-            
-            // Увеличиваем счетчик загруженных новых статей
-            loadedNewArticlesCount++;
-            
-            // Если загрузили все статьи, скрываем кнопку
-            if (loadedNewArticlesCount === moreArticles.length) {
-                loadMoreBtn.style.display = 'none';
-                console.log('Все новые статьи загружены!');
+        if (buttonContainer) {
+            // Вставляем HTML в конец main
+            mainElement.insertAdjacentHTML('beforeend', articleHTML);
+            // Перемещаем последнюю добавленную статью перед кнопкой
+            const lastArticle = mainElement.querySelector('article:last-of-type');
+            if (lastArticle && buttonContainer) {
+                mainElement.insertBefore(lastArticle, buttonContainer);
             }
         } else {
-            console.log('Больше нет статей для загрузки');
+            mainElement.insertAdjacentHTML('beforeend', articleHTML);
+        }
+    });
+    
+    // Убеждаемся, что кнопка на месте (если она существует)
+    if (buttonContainer && !mainElement.contains(buttonContainer)) {
+        mainElement.appendChild(buttonContainer);
+    }
+    
+    const totalArticles = mainElement.querySelectorAll('article').length;
+    console.log(`✅ Теперь на странице статей: ${totalArticles}`);
+}
+
+// ЗАЩИТА ОТ XSS (безопасный вывод)
+function escapeHtml(str) {
+    if (!str) return '';
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+// УВЕЛИЧЕНИЕ ПРОСМОТРОВ
+async function incrementViews(articleId) {
+    console.log(`📈 Увеличиваем просмотры для статьи ${articleId}...`);
+    
+    try {
+        const response = await fetch(`${API_URL}/articles/${articleId}/views`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Ошибка HTTP: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        console.log(`✅ Новое количество просмотров: ${data.views}`);
+        return data.views;
+    } catch (error) {
+        console.error(`❌ Ошибка увеличения просмотров: ${error.message}`);
+        return null;
+    }
+}
+
+// НАВЕШИВАНИЕ ОБРАБОТЧИКОВ
+function setupClickHandlers() {
+    const readMoreLinks = document.querySelectorAll('.read-more');
+    console.log(`🔗 Найдено ссылок: ${readMoreLinks.length}`);
+    
+    readMoreLinks.forEach(link => {
+        // Убираем старые обработчики (создаем копию без обработчиков)
+        const newLink = link.cloneNode(true);
+        link.parentNode.replaceChild(newLink, link);
+        
+        newLink.addEventListener('click', async (event) => {
+            event.preventDefault();
+            
+            const article = newLink.closest('article');
+            const viewsSpan = article.querySelector('.views-count');
+            const articleId = viewsSpan.getAttribute('data-article-id');
+            
+            const newViews = await incrementViews(articleId);
+            
+            if (newViews !== null) {
+                viewsSpan.textContent = `👁️ ${newViews} просмотров`;
+            }
+        });
+    });
+    
+    console.log('✅ Обработчики навешаны');
+}
+
+// ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ (безопасный вывод)
+function escapeHtml(str) {
+    if (!str) return '';
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+// ИНИЦИАЛИЗАЦИЯ
+async function init() {
+    console.log('🚀 Инициализация блога...');
+    
+    const data = await loadArticles(1);
+    
+    if (data.articles.length > 0) {
+        // Отображаем первые статьи (append = false — очищаем и показываем новые)
+        displayArticles(data.articles, false);
+        setupClickHandlers();
+        
+        // Настраиваем кнопку "Показать еще"
+        const loadMoreBtn = document.getElementById('loadMoreBtn');
+        if (loadMoreBtn) {
+            if (currentPage >= totalPages) {
+                loadMoreBtn.style.display = 'none';
+                console.log('🔘 Кнопка скрыта (все статьи загружены)');
+            } else {
+                loadMoreBtn.style.display = 'inline-block';
+                console.log(`🔘 Кнопка видима (страница ${currentPage} из ${totalPages})`);
+            }
+        }
+    } else {
+        console.error('❌ Не удалось загрузить статьи');
+        const mainElement = document.querySelector('main');
+        if (mainElement) {
+            mainElement.innerHTML = `
+                <p style="color: red; text-align: center; padding: 50px;">
+                    ❌ Ошибка загрузки статей.<br>
+                    Убедитесь, что сервер запущен: <code>node server.js</code>
+                </p>
+            `;
+        }
+    }
+}
+
+// КНОПКА "ПОКАЗАТЬ ЕЩЕ"
+const loadMoreBtn = document.getElementById('loadMoreBtn');
+
+if (loadMoreBtn) {
+    loadMoreBtn.addEventListener('click', async () => {
+        // Защита от множественных кликов
+        if (isLoading) {
+            console.log('⏳ Уже загружается, подождите...');
+            return;
+        }
+        
+        isLoading = true;
+        loadMoreBtn.disabled = true;
+        loadMoreBtn.textContent = 'Загрузка...';
+        
+        try {
+            const nextPage = currentPage + 1;
+            
+            if (nextPage <= totalPages) {
+                console.log(`📡 Загружаем страницу ${nextPage}...`);
+                const data = await loadArticles(nextPage);
+                
+                if (data.articles.length > 0) {
+                    // append = true — добавляем к существующим статьям
+                    displayArticles(data.articles, true);
+                    setupClickHandlers();  // навешиваем обработчики на новые статьи
+                    
+                    // Обновляем состояние кнопки
+                    if (currentPage >= totalPages) {
+                        loadMoreBtn.style.display = 'none';
+                        console.log('🔘 Кнопка скрыта (все статьи загружены)');
+                    }
+                }
+            } else {
+                loadMoreBtn.style.display = 'none';
+                console.log('🔘 Кнопка скрыта (больше нет статей)');
+            }
+        } catch (error) {
+            console.error('❌ Ошибка загрузки:', error);
+        } finally {
+            isLoading = false;
+            loadMoreBtn.disabled = false;
+            loadMoreBtn.textContent = 'Показать еще статьи';
         }
     });
 }
-    
-        
-    const themeToggle = document.getElementById('themeToggle');
-    
-    if (themeToggle) {
-        // Проверяем сохраненную тему при загрузке
-        if (localStorage.getItem('theme') === 'dark') {
-            document.body.classList.add('dark-theme');
-            themeToggle.textContent = '☀️ Светлая тема';
-        }
-        
-        themeToggle.addEventListener('click', () => {
-            document.body.classList.toggle('dark-theme');
-            const isDark = document.body.classList.contains('dark-theme');
-            localStorage.setItem('theme', isDark ? 'dark' : 'light');
-            themeToggle.textContent = isDark ? '☀️ Светлая тема' : '🌙 Темная тема';
-        });
-    }
-    
-    initializeViewCounters();
-    setupArticleClickTracking();
-    updateAllViewCounters();
+
+// ЗАПУСК
+init();

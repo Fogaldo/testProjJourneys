@@ -1,3 +1,4 @@
+
 const express = require('express');
 const cors = require('cors');
 const app = express();
@@ -55,9 +56,27 @@ const articles = [
 
 // API МАРШРУТЫ
 
-// GET /api/articles — получить все статьи
+/* // GET /api/articles — получить все статьи
 app.get('/api/articles', (req, res) => {
     res.json(articles);
+}); */
+
+// GET /api/articles — получить статьи с пагинацией
+app.get('/api/articles', (req, res) => {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 2;
+    
+    const start = (page - 1) * limit;
+    const end = start + limit;
+    
+    const paginatedArticles = articles.slice(start, end);
+    
+    res.json({
+        articles: paginatedArticles,
+        total: articles.length,
+        page: page,
+        totalPages: Math.ceil(articles.length / limit)
+    });
 });
 
 // GET /api/articles/:id — получить одну статью по ID
