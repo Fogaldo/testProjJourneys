@@ -55,12 +55,6 @@ const articles = [
 ];
 
 // API МАРШРУТЫ
-
-/* // GET /api/articles — получить все статьи
-app.get('/api/articles', (req, res) => {
-    res.json(articles);
-}); */
-
 // GET /api/articles — получить статьи с пагинацией
 app.get('/api/articles', (req, res) => {
     const page = parseInt(req.query.page) || 1;
