@@ -1,3 +1,4 @@
+/* Общие стили */
 * {
     margin: 0;
     padding: 0;
@@ -19,8 +20,6 @@ body {
     border-radius: 10px;
     box-shadow: 0 0 20px rgba(0,0,0,0.1);
     overflow: hidden;
-    display: flex;
-    flex-direction: column;
 }
 
 /* Шапка */
@@ -36,7 +35,6 @@ header h1 {
     margin-bottom: 10px;
 }
 
-/* Навигация */
 nav ul {
     list-style: none;
     display: flex;
@@ -56,20 +54,18 @@ nav a:hover {
     opacity: 0.8;
 }
 
-/* Обертка для main и aside */
+/* Контент */
 .content-wrapper {
     display: flex;
     flex-wrap: wrap;
 }
 
-/* Основной контент */
 main {
     flex: 2;
     padding: 30px;
     min-width: 250px;
 }
 
-/* Сайдбар */
 aside {
     flex: 1;
     background: #f9f9f9;
@@ -77,7 +73,7 @@ aside {
     min-width: 250px;
 }
 
-/* Адаптивность: на телефоне колонки идут друг за другом */
+/* Адаптивность */
 @media (max-width: 768px) {
     .content-wrapper {
         flex-direction: column;
@@ -104,129 +100,32 @@ article h2 {
     margin-bottom: 10px;
 }
 
-article time {
+.article-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
     color: #999;
     font-size: 0.9rem;
-    display: block;
-    margin-bottom: 15px;
 }
 
 article p {
     margin-bottom: 20px;
 }
 
-article a {
-    display: inline-block;
+article button {
     background: #667eea;
     color: white;
-    text-decoration: none;
+    border: none;
     padding: 10px 20px;
     border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
     transition: background 0.3s;
 }
 
-article a:hover {
+article button:hover {
     background: #5a67d8;
-}
-
-.load-more-btn {
-    background: #667eea;
-    color: white;
-    border: none;
-    padding: 12px 30px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 1rem;
-    transition: all 0.3s;
-}
-
-.load-more-btn:hover {
-    background: #5a67d8;
-    transform: translateY(-2px);
-}
-
-/* Контейнер для мета-информации статьи */
-.article-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-}
-
-.views-count {
-    color: #999;
-    font-size: 0.85rem;
-}
-
-/* Кнопка загрузки статей */
-.load-more-container {
-    text-align: center;
-    margin: 40px 0 20px 0;
-    padding: 0;
-}
-
-.load-more-btn {
-    background: #667eea;
-    color: white;
-    border: none;
-    padding: 14px 32px;
-    border-radius: 40px;
-    cursor: pointer;
-    font-size: 1rem;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    display: inline-block;
-}
-
-.load-more-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
-}
-
-.load-more-btn:active {
-    transform: translateY(0);
-}
-
-.load-more-btn:disabled {
-    background: #aaa;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-}
-
-/* Контейнер для мета-информации статьи */
-.article-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-}
-
-.views-count {
-    color: #999;
-    font-size: 0.85rem;
-}
-
-/* Кнопка переключения темы */
-.theme-toggle-container {
-    margin: 15px;
-}
-
-.theme-toggle-btn {
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    padding: 8px 16px;
-    border-radius: 20px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    transition: all 0.3s;
-}
-
-.theme-toggle-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: scale(1.05);
 }
 
 /* Сайдбар */
@@ -266,6 +165,7 @@ footer {
     color: white;
     text-align: center;
     padding: 30px;
+    margin-top: 0;
 }
 
 footer p:first-child {
@@ -276,6 +176,36 @@ footer p:first-child {
 footer p:last-child {
     font-size: 0.9rem;
     opacity: 0.8;
+}
+
+/* Кнопка загрузки */
+.load-more-container {
+    text-align: center;
+    margin: 30px 0 20px 0;
+}
+
+.load-more-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 14px 32px;
+    border-radius: 40px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: inline-block;
+}
+
+.load-more-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+}
+
+.load-more-btn:disabled {
+    background: #aaa;
+    cursor: not-allowed;
+    transform: none;
 }
 
 /* Темная тема */
@@ -297,8 +227,7 @@ body.dark-theme article h2 {
     color: #9b8cff;
 }
 
-body.dark-theme .article-meta time,
-body.dark-theme .views-count {
+body.dark-theme .article-meta {
     color: #aaa;
 }
 
@@ -306,10 +235,7 @@ body.dark-theme aside {
     background: #252525;
 }
 
-body.dark-theme aside h2 {
-    color: #9b8cff;
-}
-
+body.dark-theme aside h2,
 body.dark-theme aside h3 {
     color: #9b8cff;
 }
@@ -318,18 +244,6 @@ body.dark-theme aside a {
     color: #9b8cff;
 }
 
-body.dark-theme aside a:hover {
-    color: #b8aaff;
-}
-
 body.dark-theme footer {
     background: #1a1a1a;
-}
-
-body.dark-theme .load-more-btn {
-    background: #9b8cff;
-}
-
-body.dark-theme .load-more-btn:hover {
-    background: #8a7ae6;
 }
